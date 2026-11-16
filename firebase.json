@@ -7,6 +7,9 @@
       "README.md",
       "docs/**",
       "**/.*",
+      ".git/**",
+      "**/.git/**",
+      "js/firebase-config.example.js",
       "**/node_modules/**"
     ],
     "headers": [
