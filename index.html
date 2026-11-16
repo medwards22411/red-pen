@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Red Pen: private grading help for teachers</title>
+<meta name="description" content="Red Pen drafts rubric feedback on student writing with on-device AI, so student work stays on the teacher's computer. When a device can't run a local model, papers are anonymized before the cloud ever sees them.">
+<meta name="theme-color" content="#b3261e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><path d="M22.5 3.5l6 6L12 26l-7.5 1.5L6 20 22.5 3.5z" fill="#b3261e"/><path d="M6 20l6 6" stroke="#fff" stroke-width="1.6"/><path d="M19.5 6.5l6 6" stroke="#fff" stroke-width="1.6"/></svg>
+    <div>
+      <h1>Red Pen</h1>
+      <p class="sub" id="class-name">English 9</p>
+    </div>
+  </div>
+  <div class="status" id="ai-status" role="status" aria-live="polite">
+    <span class="dot"></span><span class="status-text">Checking this device…</span>
+  </div>
+  <div class="top-actions">
+    <span class="net" id="net" hidden>Offline</span>
+    <button class="btn ghost" id="open-settings" type="button" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      <span>Settings</span>
+    </button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-grade" aria-controls="panel-grade" aria-selected="true">Grade</button>
+  <button role="tab" id="tab-rubric" aria-controls="panel-rubric" aria-selected="false" tabindex="-1">Assignment &amp; rubric</button>
+  <button role="tab" id="tab-insights" aria-controls="panel-insights" aria-selected="false" tabindex="-1">Class insights</button>
+  <button role="tab" id="tab-how" aria-controls="panel-how" aria-selected="false" tabindex="-1">How privacy works</button>
+</nav>
+
+<main>
+  <!-- GRADE -->
+  <section class="panel" id="panel-grade" role="tabpanel" aria-labelledby="tab-grade">
+    <div class="grade-grid">
+      <aside class="roster" aria-label="Students">
+        <div class="roster-head">
+          <h2>Students</h2>
+          <button class="btn small" id="grade-all" type="button">Grade all</button>
+        </div>
+        <ul id="roster-list"></ul>
+        <details class="add-student">
+          <summary>+ Add a paper</summary>
+          <form id="add-form">
+            <label>Student name <input name="name" required autocomplete="off"></label>
+            <label>Paper <textarea name="essay" rows="6" required placeholder="Paste the student's writing"></textarea></label>
+            <button class="btn small" type="submit">Add</button>
+          </form>
+        </details>
+      </aside>
+
+      <article class="paper-wrap" aria-label="Student paper">
+        <div class="paper-head">
+          <h2 id="paper-name">Student</h2>
+          <span class="words" id="paper-words"></span>
+        </div>
+        <div class="paper" id="paper" tabindex="0"></div>
+      </article>
+
+      <section class="feedback" aria-label="Feedback">
+        <div class="route-pick" role="radiogroup" aria-label="Privacy route">
+          <span class="lbl">Route</span>
+          <label><input type="radio" name="route" value="auto" checked><span>Auto (on-device first)</span></label>
+          <label><input type="radio" name="route" value="cloud"><span>Anonymized cloud</span></label>
+        </div>
+        <button class="btn primary big" id="grade-one" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3l5 5L9 20l-6 1 1-6L16 3Z"/></svg>
+          Draft feedback
+        </button>
+        <div id="feedback-body" class="feedback-body"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- RUBRIC -->
+  <section class="panel" id="panel-rubric" role="tabpanel" aria-labelledby="tab-rubric" hidden>
+    <div class="card">
+      <h2>Assignment</h2>
+      <p class="hint">No student work is used here, so drafting a rubric can use the larger cloud model when you're online. Offline, it falls back to the on-device model.</p>
+      <label class="block">Prompt <textarea id="assignment" rows="4"></textarea></label>
+      <div class="row">
+        <button class="btn" id="draft-rubric" type="button">Draft a rubric from this prompt</button>
+        <span class="src" id="rubric-src"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Rubric</h2>
+      <p class="hint">Scored 1 (beginning) to 4 (exceeds). Edit anything.</p>
+      <ol class="rubric-list" id="rubric-list"></ol>
+      <button class="btn ghost small" id="add-criterion" type="button">+ Add criterion</button>
+    </div>
+  </section>
+
+  <!-- INSIGHTS -->
+  <section class="panel" id="panel-insights" role="tabpanel" aria-labelledby="tab-insights" hidden>
+    <div class="card">
+      <h2>What the class needs next</h2>
+      <p class="hint">Built only from anonymized scores and next steps. No essays and no names are used.</p>
+      <div class="row">
+        <button class="btn" id="build-insights" type="button">Build class insights</button>
+        <span class="src" id="insights-src"></span>
+      </div>
+      <div id="score-grid" class="score-grid"></div>
+    </div>
+    <div id="insights-body"></div>
+  </section>
+
+  <!-- HOW -->
+  <section class="panel" id="panel-how" role="tabpanel" aria-labelledby="tab-how" hidden>
+    <div class="card how">
+      <h2>Student writing never leaves this computer with a name on it.</h2>
+      <p>Red Pen uses Firebase AI Logic's hybrid inference, and it picks the route on purpose instead of leaving it to automatic fallback.</p>
+      <div class="flow">
+        <div class="flow-col">
+          <h3>Student papers</h3>
+          <div class="step dev"><b>Chrome can run Gemini Nano?</b><span>Feedback is drafted on this device with <code>ONLY_ON_DEVICE</code>. Zero bytes are sent. Works offline.</span></div>
+          <div class="arrow" aria-hidden="true">or, if it can't</div>
+          <div class="step shield"><b>Anonymize first, on this device</b><span>Student and classmate names, teacher, school, emails, phones, IDs, addresses and dates become placeholders like <code>[STUDENT]</code>.</span></div>
+          <div class="step cloud"><b>Only the safe copy goes to the cloud</b><span><code>ONLY_IN_CLOUD</code>, never automatic fallback, so a real name can't slip through.</span></div>
+          <div class="step dev"><b>Names are put back on this device</b><span>The teacher sees a normal note to Maya. The cloud only ever saw <code>[STUDENT]</code>.</span></div>
+        </div>
+        <div class="flow-col">
+          <h3>Planning work</h3>
+          <div class="step cloud"><b>Rubrics and class insights</b><span>No student data, so these use <code>PREFER_IN_CLOUD</code> for the larger model when online.</span></div>
+          <div class="step dev"><b>Offline? Still works.</b><span>The same request falls back to the on-device model.</span></div>
+          <h3 class="mt">Every result shows a receipt</h3>
+          <div class="step"><b>"Stayed on this device"</b><span>or "Anonymized, then sent," with a button to see the exact text that left.</span></div>
+        </div>
+      </div>
+      <p class="fine">Why it matters: student work is protected by FERPA, and many districts bar teachers from pasting it into AI tools. Many school Chromebooks can't run a local model, which is why the anonymized route exists.</p>
+    </div>
+  </section>
+</main>
+
+<dialog id="settings" aria-labelledby="settings-title">
+  <form method="dialog" id="settings-form">
+    <h2 id="settings-title">Settings</h2>
+    <label>Class name <input name="className"></label>
+    <label>Your name (kept private) <input name="teacher"></label>
+    <label>School (kept private) <input name="school"></label>
+    <label>Other private words, comma separated <input name="extraTerms" placeholder="e.g. a nickname, a street, a team name"></label>
+    <div class="two">
+      <label>Student note tone
+        <select name="tone">
+          <option value="warm, encouraging">Warm</option>
+          <option value="direct, specific">Direct</option>
+          <option value="upbeat, coach-like">Coach</option>
+        </select>
+      </label>
+      <label>Reading level (grade) <input name="readingLevel" type="number" min="2" max="12"></label>
+    </div>
+    <div class="dialog-actions">
+      <button class="btn ghost" type="button" id="reset-demo">Reset demo class</button>
+      <button class="btn ghost" type="button" id="clear-all">Delete all papers</button>
+      <span class="spacer"></span>
+      <button class="btn primary" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
